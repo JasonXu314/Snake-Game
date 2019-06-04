@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Snake Game</title>
+        <script src = "scripts.js"></script>
+    </head>
+    <style>
+    h1
+    {
+        text-align: center;
+    }
+    canvas
+    {
+        width: 400px;
+        height: 400px;
+        border-width: 5px;
+        border-color: black;
+        border-style: solid;
+        background-color: yellow;
+    }
+    svg
+    {
+        width: 400px;
+        height: 400px;
+        border-width: 5px;
+        border-color: black;
+        border-style: solid;
+        background-color: yellow;
+    }
+    </style>
+    <body>
+        <h1>
+            Snake Game
+        </h1>
+        <button id = "startbutton" onclick = "gameStart()">Start</button>
+        <button onclick = "gamePause()">Pause</button>
+        <button onclick = "reset()">Reset</button>
+        <br/>
+        <svg id = "svg">
+            <g id = "g" transform = "translate(0, 0)">
+                <rect id = "snake" x = "0" y = "0" width = "10" height = "10">
+                    <!-- <animate id = "motion" attributeName = "x" dur = "1s" repeatCount = "indefinite"/> -->
+                </rect>
+            </g>
+        </svg>
+        <h3 id = "scoreboard"> Score: </h3>
+    </body>
+</html>
