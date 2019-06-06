@@ -11,8 +11,8 @@ var interval;
 var foodInterval;
 var g;
 const foods = [];
-const visitedCoords = [];
-var pathLength = 0;
+var speedFactor = 1;
+const snakeParts = [];
 
 window.addEventListener('load', () => {
     svg = document.getElementById('svg');
@@ -28,10 +28,15 @@ Left: 37
 Right: 39
 */
 window.addEventListener('keydown', (e) => {
-    let direction = snake.direction;
     switch (e.keyCode)
     {
         case (38):
+            if (snake.length !== 1 ? snake.direction !== "S" : true)
+            {
+                snake.direction = "N";
+            }
+            break;
+        case (87):
             if (snake.length !== 1 ? snake.direction !== "S" : true)
             {
                 snake.direction = "N";
@@ -43,7 +48,19 @@ window.addEventListener('keydown', (e) => {
                 snake.direction = "S";
             }
             break;
+        case (83):
+            if (snake.length !== 1 ? snake.direction !== "N" : true)
+            {
+                snake.direction = "S";
+            }
+            break;
         case (37):
+            if (snake.length !== 1 ? snake.direction !== "E" : true)
+            {
+                snake.direction = "W";
+            }
+            break;
+        case (65):
             if (snake.length !== 1 ? snake.direction !== "E" : true)
             {
                 snake.direction = "W";
@@ -55,15 +72,14 @@ window.addEventListener('keydown', (e) => {
                 snake.direction = "E";
             }
             break;
+        case (68):
+            if (snake.length !== 1 ? snake.direction !== "W" : true)
+            {
+                snake.direction = "E";
+            }
+            break;
     }
-    if ((e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 37 || e.keyCode === 39) && direction !== snake.direction)
-    {
-        visitedCoords.unshift({
-            x: Number(snakeElement.getAttributeNS(null, 'x')),
-            y: Number(snakeElement.getAttributeNS(null, 'y'))
-        });
-        // console.table(visitedCoords);
-    }
+    
 });
 
 function gameStart()
@@ -90,122 +106,72 @@ function gameStart()
                 foods.splice(foods.indexOf(food), 1);
                 snake.score++;
                 snake.length++;
+                speedFactor = Math.pow(1.1, snake.score);
                 document.getElementById('scoreboard').textContent = "Score: " + snake.score.toString();
             }
         });
 
-        let lengthHandler = (prev, point) => {
-            let prevPoint = visitedCoords[visitedCoords.indexOf(point) - 1];
-
-            if (prevPoint === undefined)
+        for (let part of snakeParts)
+        {
+            let svgRect = svg.createSVGRect();
+            svgRect.x = Number(part.getAttributeNS(null, 'x'));
+            svgRect.y = Number(part.getAttributeNS(null, 'y'));
+            svgRect.width = Number(part.getAttributeNS(null, 'width'));
+            svgRect.height = Number(part.getAttributeNS(null, 'height'));
+            if (svg.checkIntersection(snakeElement, svgRect))
             {
-                return prev;
+                reset();
+                alert('Game Over!\nYour score was ' + snake.score);
+                break;
             }
-
-            prev += Math.abs(point.y - prevPoint.y) + Math.abs(point.x - prevPoint.x);
-
-            return prev;
-        }
-        let temp = null;
-
-        if (visitedCoords.length === 0 || visitedCoords.length === 1)
-        {
-            pathLength = snake.length * 10;
-        }
-        else
-        {
-            pathLength = visitedCoords.reduce(lengthHandler, 0);
-        }
-        
-        while (pathLength > snake.length * 10)
-        {
-            temp = visitedCoords.pop();
-            pathLength = visitedCoords.reduce(lengthHandler, 0);
         }
 
-        if (temp !== null)
-        {
-            visitedCoords.push(temp);
-        }
-
-        let point1 = {
-            x: Number(snakeElement.getAttributeNS(null, 'x')),
-            y: Number(snakeElement.getAttributeNS(null, 'y'))
-        };
-        let index = 0;
-
-        while (pathLength > 0)
-        {
-            if (visitedCoords.length < 0)
-            {
-                let point2 = {
-                    x: visitedCoords[index].x,
-                    y: visitedCoords[index].y
-                };
-                let line = document.createElementNS("http://www.w3.org/2000/svg", 'line');
-                line.setAttributeNS(null, 'x1', point1.x.toString());
-                line.setAttributeNS(null, 'y1', point1.y.toString());
-                line.setAttributeNS(null, 'x2', point2.x.toString());
-                line.setAttributeNS(null, 'y2', point2.y.toString());
-                line.setAttributeNS(null, 'style', "stroke:rgb(255, 255, 255);stroke-width:20");
-                line.setAttributeNS(null, 'class', 'snakebody');
-                g.appendChild(line);
-                index++;
-                point1 = point2;
-                pathLength -= Math.abs(point1.x - point2.x) + Math.abs(point1.y - point2.y);
-            }
-            else
-            {
-                let line = document.createElementNS("http://www.w3.org/2000/svg", 'line');
-                let x2 = point1.x;
-                let y2 = point1.y;
-                switch (snake.direction)
+        if (snake.length > 1)
+        {   
+            let snakePart = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+            snakePart.setAttributeNS(null, 'x', snakeElement.getAttributeNS(null, 'x'));
+            snakePart.setAttributeNS(null, 'y', snakeElement.getAttributeNS(null, 'y'));
+            snakePart.setAttributeNS(null, 'width', "10");
+            snakePart.setAttributeNS(null, 'height', "10");
+            snakePart.setAttributeNS(null, 'style', "fill:black");
+            g.appendChild(snakePart);
+            let loop = setInterval(() => {
+                let svgRect = svg.createSVGRect();
+                svgRect.x = Number(snakePart.getAttributeNS(null, 'x'));
+                svgRect.y = Number(snakePart.getAttributeNS(null, 'y'));
+                svgRect.width = Number(snakePart.getAttributeNS(null, 'width'));
+                svgRect.height = Number(snakePart.getAttributeNS(null, 'height'));
+                if (!svg.checkIntersection(snakeElement, svgRect))
                 {
-                    case ("N"):
-                        y2 += snake.length * 10;
-                        break;
-                    case ("E"):
-                        x2 -= snake.length * 10;
-                        break;
-                    case ("S"):
-                        y2 -= snake.length * 10;
-                        break;
-                    case ("W"):
-                        x2 += snake.length * 10;
-                        break;
+                    snakeParts.push(snakePart);
+                    clearInterval(loop);
                 }
-                line.setAttributeNS(null, 'x1', point1.x.toString());
-                line.setAttributeNS(null, 'y1', point1.y.toString());
-                line.setAttributeNS(null, 'x2', x2.toString());
-                line.setAttributeNS(null, 'y2', y2.toString());
-                line.setAttributeNS(null, 'style', "stroke:rgb(255, 255, 255);stroke-width:20");
-                line.setAttributeNS(null, 'class', 'snakebody');
-                g.appendChild(line);
-                pathLength = 0;
-            }
+            }, 10);
+            setTimeout(() => {
+                g.removeChild(snakePart);
+                snakeParts.splice(snakeParts.indexOf(snakePart), 1);
+            }, (100 * (snake.length - 1))/(0.5 * speedFactor));
         }
 
         switch (snake.direction)
         {
             case ("N"):
-                let newY1 = Number(snakeElement.getAttributeNS(null, 'y')) - (0.5 * Math.pow(1.1, snake.score));
+                let newY1 = Number(snakeElement.getAttributeNS(null, 'y')) - (0.5 * speedFactor);
                 snakeElement.setAttributeNS(null, 'y', `${newY1 < 0 ? 400 : newY1}`);
                 break;
             case ("E"):
-                let newX1 = Number(snakeElement.getAttributeNS(null, 'x')) + (0.5 * Math.pow(1.1, snake.score));
+                let newX1 = Number(snakeElement.getAttributeNS(null, 'x')) + (0.5 * speedFactor);
                 snakeElement.setAttributeNS(null, 'x', `${newX1 > 400 ? 0 : newX1}`);
                 break;
             case ("S"):
-                let newY2 = Number(snakeElement.getAttributeNS(null, 'y')) + (0.5 * Math.pow(1.1, snake.score));
+                let newY2 = Number(snakeElement.getAttributeNS(null, 'y')) + (0.5 * speedFactor);
                 snakeElement.setAttributeNS(null, 'y', `${newY2 > 400 ? 0 : newY2}`);
                 break;
             case ("W"):
-                let newX2 = Number(snakeElement.getAttributeNS(null, 'x')) - (0.5 * Math.pow(1.1, snake.score));
+                let newX2 = Number(snakeElement.getAttributeNS(null, 'x')) - (0.5 * speedFactor);
                 snakeElement.setAttributeNS(null, 'x', `${newX2 < 0 ? 400 : newX2}`);
                 break;
         }
-
-        Array.from(document.getElementsByClassName('snakebody')).forEach((item) => g.removeChild(item));
     }, 10);
 
     foodInterval = setInterval(() => {
@@ -224,7 +190,7 @@ function gameStart()
         food.setAttributeNS(null, 'class', "food");
         g.appendChild(food);
         foods.push(food);
-    }, 5000);
+    }, 5000 * Math.pow(0.9, snake.score/2));
 }
 
 function gamePause()
@@ -245,6 +211,6 @@ function reset()
     snakeElement.setAttributeNS(null, 'y', "0");
     document.getElementById('startbutton').textContent = 'Start';
     document.getElementById('scoreboard').textContent = "Score: " + snake.score.toString();
-    visitedCoords.splice(0, visitedCoords.length);
     foods.splice(0, foods.length);
+    speedFactor = 1;
 }
