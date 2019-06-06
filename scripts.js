@@ -89,6 +89,7 @@ function gameStart()
         isPaused = false;
         document.getElementById('startbutton').textContent = 'Start';
     }
+
     interval = setInterval(() => {
         if (isPaused)
         {
@@ -106,7 +107,7 @@ function gameStart()
                 foods.splice(foods.indexOf(food), 1);
                 snake.score++;
                 snake.length++;
-                speedFactor = Math.pow(1.1, snake.score);
+                speedFactor = Math.pow(1.1, snake.score/2);
                 document.getElementById('scoreboard').textContent = "Score: " + snake.score.toString();
             }
         });
@@ -124,33 +125,6 @@ function gameStart()
                 alert('Game Over!\nYour score was ' + snake.score);
                 break;
             }
-        }
-
-        if (snake.length > 1)
-        {   
-            let snakePart = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-            snakePart.setAttributeNS(null, 'x', snakeElement.getAttributeNS(null, 'x'));
-            snakePart.setAttributeNS(null, 'y', snakeElement.getAttributeNS(null, 'y'));
-            snakePart.setAttributeNS(null, 'width', "10");
-            snakePart.setAttributeNS(null, 'height', "10");
-            snakePart.setAttributeNS(null, 'style', "fill:black");
-            g.appendChild(snakePart);
-            let loop = setInterval(() => {
-                let svgRect = svg.createSVGRect();
-                svgRect.x = Number(snakePart.getAttributeNS(null, 'x'));
-                svgRect.y = Number(snakePart.getAttributeNS(null, 'y'));
-                svgRect.width = Number(snakePart.getAttributeNS(null, 'width'));
-                svgRect.height = Number(snakePart.getAttributeNS(null, 'height'));
-                if (!svg.checkIntersection(snakeElement, svgRect))
-                {
-                    snakeParts.push(snakePart);
-                    clearInterval(loop);
-                }
-            }, 10);
-            setTimeout(() => {
-                g.removeChild(snakePart);
-                snakeParts.splice(snakeParts.indexOf(snakePart), 1);
-            }, (100 * (snake.length - 1))/(0.5 * speedFactor));
         }
 
         switch (snake.direction)
@@ -172,6 +146,33 @@ function gameStart()
                 snakeElement.setAttributeNS(null, 'x', `${newX2 < 0 ? 400 : newX2}`);
                 break;
         }
+
+        if (snake.length > 1)
+        {   
+            let snakePart = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+            snakePart.setAttributeNS(null, 'x', snakeElement.getAttributeNS(null, 'x'));
+            snakePart.setAttributeNS(null, 'y', snakeElement.getAttributeNS(null, 'y'));
+            snakePart.setAttributeNS(null, 'width', "10");
+            snakePart.setAttributeNS(null, 'height', "10");
+            snakePart.setAttributeNS(null, 'style', "fill:black");
+            g.appendChild(snakePart);
+            let svgRect = svg.createSVGRect();
+            let loop = setInterval(() => {
+                svgRect.x = Number(snakePart.getAttributeNS(null, 'x'));
+                svgRect.y = Number(snakePart.getAttributeNS(null, 'y'));
+                svgRect.width = Number(snakePart.getAttributeNS(null, 'width'));
+                svgRect.height = Number(snakePart.getAttributeNS(null, 'height'));
+                if (!svg.checkIntersection(snakeElement, svgRect))
+                {
+                    snakeParts.push(snakePart);
+                    clearInterval(loop);
+                }
+            }, 10);
+            setTimeout(() => {
+                g.removeChild(snakePart);
+                snakeParts.splice(snakeParts.indexOf(snakePart), 1);
+            }, (100 * (snake.length - 1))/(0.5 * speedFactor));
+        }
     }, 10);
 
     foodInterval = setInterval(() => {
@@ -190,6 +191,13 @@ function gameStart()
         food.setAttributeNS(null, 'class', "food");
         g.appendChild(food);
         foods.push(food);
+        setTimeout(() => {
+            if (food.parentElement === g)
+            {
+                foods.splice(foods.indexOf(food), 1);
+                g.removeChild(food);
+            }
+        }, 10000 * Math.pow(0.9, snake.score/2))
     }, 5000 * Math.pow(0.9, snake.score/2));
 }
 
