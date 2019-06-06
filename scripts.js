@@ -13,6 +13,8 @@ var g;
 const foods = [];
 var speedFactor = 1;
 const snakeParts = [];
+var scaleFactor = 1;
+var isStarted = false;
 
 window.addEventListener('load', () => {
     svg = document.getElementById('svg');
@@ -71,11 +73,19 @@ window.addEventListener('keydown', (e) => {
             {
                 snake.direction = "E";
             }
+            if (!isStarted)
+            {
+                gameStart();
+            }
             break;
         case (68):
             if (snake.length !== 1 ? snake.direction !== "W" : true)
             {
                 snake.direction = "E";
+            }
+            if (!isStarted)
+            {
+                gameStart();
             }
             break;
     }
@@ -89,6 +99,8 @@ function gameStart()
         isPaused = false;
         document.getElementById('startbutton').textContent = 'Start';
     }
+
+    isStarted = true;
 
     interval = setInterval(() => {
         if (isPaused)
@@ -107,7 +119,27 @@ function gameStart()
                 foods.splice(foods.indexOf(food), 1);
                 snake.score++;
                 snake.length++;
-                speedFactor = Math.pow(1.1, snake.score/2);
+                speedFactor = Math.pow(1.1, snake.score);
+                let up = true;
+                let loop = setInterval(() => {
+                    if (up)
+                    {
+                        scaleFactor += 0.05
+                    }
+                    else
+                    {
+                        scaleFactor -= 0.05
+                    }
+                    if (scaleFactor >= 1.5)
+                    {
+                        up = false;
+                    }
+                    if (scaleFactor <= 1)
+                    {
+                        scaleFactor = 1;
+                        clearInterval(loop);
+                    }
+                }, 10);
                 document.getElementById('scoreboard').textContent = "Score: " + snake.score.toString();
             }
         });
@@ -121,8 +153,8 @@ function gameStart()
             svgRect.height = Number(part.getAttributeNS(null, 'height'));
             if (svg.checkIntersection(snakeElement, svgRect))
             {
-                reset();
                 alert('Game Over!\nYour score was ' + snake.score);
+                reset();
                 break;
             }
         }
@@ -150,10 +182,18 @@ function gameStart()
         if (snake.length > 1)
         {   
             let snakePart = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-            snakePart.setAttributeNS(null, 'x', snakeElement.getAttributeNS(null, 'x'));
-            snakePart.setAttributeNS(null, 'y', snakeElement.getAttributeNS(null, 'y'));
-            snakePart.setAttributeNS(null, 'width', "10");
-            snakePart.setAttributeNS(null, 'height', "10");
+            let x = Number(snakeElement.getAttributeNS(null, 'x'));
+            let y = Number(snakeElement.getAttributeNS(null, 'y'));
+            let height = 10;
+            let width = 10;
+            height *= scaleFactor;
+            width *= scaleFactor;
+            x -= (width - 10)/2;
+            y -= (height - 10)/2;
+            snakePart.setAttributeNS(null, 'x', '' + x);
+            snakePart.setAttributeNS(null, 'y', '' + y);
+            snakePart.setAttributeNS(null, 'width', '' + width);
+            snakePart.setAttributeNS(null, 'height', '' + height);
             snakePart.setAttributeNS(null, 'style', "fill:black");
             g.appendChild(snakePart);
             let svgRect = svg.createSVGRect();
@@ -220,5 +260,7 @@ function reset()
     document.getElementById('startbutton').textContent = 'Start';
     document.getElementById('scoreboard').textContent = "Score: " + snake.score.toString();
     foods.splice(0, foods.length);
+    snakeParts.splice(0, snakeParts.length);
     speedFactor = 1;
+    isStarted = false;
 }
